@@ -86,7 +86,11 @@ export default function WatchEntryForm({ initialData, isOpen, onClose }: WatchEn
     };
 
     const handleSubmit = async () => {
-        if (!selectedMedia || !watchedAt) return;
+        console.log('Form Submit Triggered');
+        if (!selectedMedia || !watchedAt) {
+            console.log('Validation failed: Missing selectedMedia or watchedAt');
+            return;
+        }
 
         const entryData = {
             tmdbId: selectedMedia.id,
@@ -102,9 +106,13 @@ export default function WatchEntryForm({ initialData, isOpen, onClose }: WatchEn
             totalEpisodes: selectedMedia.media_type === 'tv' ? totalEpisodes : undefined,
         };
 
+        console.log('Submitting Entry Data:', entryData);
+
         if (initialData) {
+            console.log('Updating existing entry:', initialData.id);
             await updateWatchEntry(initialData.id, entryData);
         } else {
+            console.log('Adding new entry');
             await addWatchEntry(entryData);
         }
         onClose();

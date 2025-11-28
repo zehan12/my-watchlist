@@ -61,19 +61,29 @@ export async function deleteWatchEntry(id: string) {
 }
 
 export async function updateWatchEntry(id: string, data: Partial<Omit<WatchEntry, 'id' | 'createdAt'>>) {
-    console.log('Updating entry:', id, data);
+    console.log('--- updateWatchEntry START ---');
+    console.log('ID:', id);
+    console.log('Data:', JSON.stringify(data, null, 2));
+
     const entries = await readCSV();
     const index = entries.findIndex((entry) => entry.id === id);
 
     if (index !== -1) {
-        entries[index] = {
+        console.log('Entry found at index:', index);
+        const updatedEntry = {
             ...entries[index],
             ...data,
             watchedAt: data.watchedAt ? new Date(data.watchedAt).toISOString() : entries[index].watchedAt,
         };
+        entries[index] = updatedEntry;
+        console.log('Updated Entry:', JSON.stringify(updatedEntry, null, 2));
+
         await writeCSV(entries);
+        console.log('CSV written');
         revalidatePath('/');
     } else {
         console.log('Entry not found for update:', id);
+        console.log('Available IDs:', entries.map(e => e.id).join(', '));
     }
+    console.log('--- updateWatchEntry END ---');
 }
