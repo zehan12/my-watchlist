@@ -257,27 +257,26 @@ export default function WatchEntryForm({ initialData, isOpen, onClose }: WatchEn
                         )}
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-400">Rating (0-10)</label>
-                            <div className="flex items-center gap-4">
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    max="10"
-                                    value={rating}
-                                    onChange={(e) => setRating(Number(e.target.value))}
-                                    className="bg-zinc-900 border-zinc-800 w-24"
-                                />
-                                <div className="flex gap-1 text-yellow-500">
-                                    {[...Array(5)].map((_, i) => (
+                            <label className="text-sm font-medium text-zinc-400">Rating</label>
+                            <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setRating(star)}
+                                        className="focus:outline-none transition-transform hover:scale-110"
+                                    >
                                         <Star
-                                            key={i}
                                             className={cn(
-                                                "w-5 h-5",
-                                                i < Math.round(rating / 2) ? "fill-current" : "text-zinc-700"
+                                                "w-6 h-6 transition-colors",
+                                                star <= rating ? "fill-yellow-500 text-yellow-500" : "text-zinc-700 hover:text-yellow-500/50"
                                             )}
                                         />
-                                    ))}
-                                </div>
+                                    </button>
+                                ))}
+                                <span className="ml-2 text-sm text-zinc-500 font-medium w-8">
+                                    {rating > 0 ? rating : '-'}
+                                </span>
                             </div>
                         </div>
 
