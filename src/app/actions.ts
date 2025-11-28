@@ -23,9 +23,11 @@ export async function searchTMDB(query: string) {
     }
 
     const data = await res.json();
-    return data.results.filter(
+    const filtered = data.results.filter(
         (item: any) => item.media_type === 'movie' || item.media_type === 'tv'
     );
+    console.log(`Search for "${query}" returned ${filtered.length} results (raw: ${data.results.length})`);
+    return filtered;
 }
 
 export async function addWatchEntry(data: Omit<WatchEntry, 'id' | 'createdAt'>) {
@@ -49,8 +51,29 @@ export async function getWatchHistory() {
 }
 
 export async function deleteWatchEntry(id: string) {
+    console.log('Deleting entry:', id);
     const entries = await readCSV();
+    const initialLength = entries.length;
     const filtered = entries.filter((entry) => entry.id !== id);
+    console.log('Entries before:', initialLength, 'After:', filtered.length);
     await writeCSV(filtered);
     revalidatePath('/');
+}
+
+export async function updateWatchEntry(id: string, data: Partial<Omit<WatchEntry, 'id' | 'createdAt'>>) {
+    console.log('Updating entry:', id, data);
+    const entries = await readCSV();
+    const index = entries.findIndex((entry) => entry.id === id);
+
+    if (index !== -1) {
+        entries[index] = {
+            ...entries[index],
+            ...data,
+            watchedAt: data.watchedAt ? new Date(data.watchedAt).toISOString() : entries[index].watchedAt,
+        };
+        await writeCSV(entries);
+        revalidatePath('/');
+    } else {
+        console.log('Entry not found for update:', id);
+    }
 }

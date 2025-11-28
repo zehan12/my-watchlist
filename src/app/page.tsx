@@ -1,6 +1,7 @@
 import { getWatchHistory } from '@/app/actions';
 import AddEntryButton from '@/components/AddEntryButton';
 import Image from 'next/image';
+import WatchEntryCard from '@/components/WatchEntryCard';
 
 export default async function Home() {
   const history = await getWatchHistory();
@@ -27,8 +28,8 @@ export default async function Home() {
     <div className="min-h-screen bg-black text-white p-8 pb-24">
       <div className="max-w-5xl mx-auto">
         <header className="mb-12 flex justify-between items-center">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            Watch History
+          <h1 className="text-4xl font-bold bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            My Watchlist
           </h1>
           <div className="text-zinc-400">
             {history.length} {history.length === 1 ? 'Entry' : 'Entries'}
@@ -55,41 +56,7 @@ export default async function Home() {
                       </h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                         {entries.map((entry: any) => (
-                          <div
-                            key={entry.id}
-                            className="group relative aspect-[2/3] bg-zinc-900 rounded-xl overflow-hidden shadow-lg transition-transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-900/20"
-                          >
-                            {entry.posterPath ? (
-                              <Image
-                                src={`https://image.tmdb.org/t/p/w500${entry.posterPath}`}
-                                alt={entry.title}
-                                fill
-                                className="object-cover"
-                              />
-                            ) : (
-                              <div className="flex items-center justify-center h-full text-zinc-600 p-4 text-center text-sm">
-                                {entry.title}
-                              </div>
-                            )}
-
-                            {/* Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-end">
-                              <h4 className="font-bold text-white text-sm leading-tight mb-1">
-                                {entry.title}
-                              </h4>
-                              <div className="flex items-center justify-between text-xs text-zinc-300">
-                                <span className="capitalize">{entry.mediaType}</span>
-                                {entry.rating && (
-                                  <span className="flex items-center gap-1 text-yellow-400">
-                                    ★ {entry.rating}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-xs text-zinc-500 mt-2">
-                                {new Date(entry.watchedAt).toLocaleDateString()}
-                              </div>
-                            </div>
-                          </div>
+                          <WatchEntryCard key={entry.id} entry={entry} />
                         ))}
                       </div>
                     </div>
