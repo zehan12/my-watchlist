@@ -1,16 +1,15 @@
 'use server';
 
-import { readCSV, writeCSV, type WatchEntry } from '@/db';
+import connectDB from '@/lib/db';
+import WatchEntry, { IWatchEntry } from '@/models/WatchEntry';
 import { revalidatePath } from 'next/cache';
-import { v4 as uuidv4 } from 'uuid';
 
-const TMDB_API_KEY = process.env.TMDB_API_KEY;
+import { env } from '@/env';
+
+const TMDB_API_KEY = env.TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 export async function searchTMDB(query: string) {
-    if (!TMDB_API_KEY) {
-        throw new Error('TMDB_API_KEY is not set');
-    }
 
     const res = await fetch(
         `${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(
@@ -30,60 +29,64 @@ export async function searchTMDB(query: string) {
     return filtered;
 }
 
-export async function addWatchEntry(data: Omit<WatchEntry, 'id' | 'createdAt'>) {
-    const entries = await readCSV();
-    const newEntry: WatchEntry = {
-        ...data,
-        id: uuidv4(),
-        createdAt: new Date().toISOString(),
-        watchedAt: new Date(data.watchedAt).toISOString(), // Ensure ISO string
-    };
-
-    entries.push(newEntry);
-    await writeCSV(entries);
-    revalidatePath('/');
+export async function addWatchEntry(data: Omit<IWatchEntry, '_id' | 'createdAt' | 'updatedAt'>) {
+    await connectDB();
+    try {
+        const newEntry = await WatchEntry.create({
+            ...data,
+            watchedAt: new Date(data.watchedAt),
+        });
+        console.log('Added entry:', newEntry._id);
+        revalidatePath('/');
+        return JSON.parse(JSON.stringify(newEntry));
+    } catch (error) {
+        console.error('Failed to add entry:', error);
+        throw new Error('Failed to add entry');
+    }
 }
 
 export async function getWatchHistory() {
-    const entries = await readCSV();
-    // Sort by watchedAt desc
-    return entries.sort((a, b) => new Date(b.watchedAt).getTime() - new Date(a.watchedAt).getTime());
+    await connectDB();
+    try {
+        const entries = await WatchEntry.find({}).sort({ watchedAt: -1 }).lean();
+        return JSON.parse(JSON.stringify(entries));
+    } catch (error) {
+        console.error('Failed to get watch history:', error);
+        return [];
+    }
 }
 
 export async function deleteWatchEntry(id: string) {
-    console.log('Deleting entry:', id);
-    const entries = await readCSV();
-    const initialLength = entries.length;
-    const filtered = entries.filter((entry) => entry.id !== id);
-    console.log('Entries before:', initialLength, 'After:', filtered.length);
-    await writeCSV(filtered);
-    revalidatePath('/');
+    await connectDB();
+    try {
+        console.log('Deleting entry:', id);
+        await WatchEntry.findByIdAndDelete(id);
+        revalidatePath('/');
+    } catch (error) {
+        console.error('Failed to delete entry:', error);
+        throw new Error('Failed to delete entry');
+    }
 }
 
-export async function updateWatchEntry(id: string, data: Partial<Omit<WatchEntry, 'id' | 'createdAt'>>) {
-    console.log('--- updateWatchEntry START ---');
-    console.log('ID:', id);
-    console.log('Data:', JSON.stringify(data, null, 2));
+export async function updateWatchEntry(id: string, data: Partial<Omit<IWatchEntry, '_id' | 'createdAt' | 'updatedAt'>>) {
+    await connectDB();
+    try {
+        console.log('Updating entry:', id);
+        const updatedEntry = await WatchEntry.findByIdAndUpdate(
+            id,
+            { ...data, watchedAt: data.watchedAt ? new Date(data.watchedAt) : undefined },
+            { new: true }
+        ).lean();
 
-    const entries = await readCSV();
-    const index = entries.findIndex((entry) => entry.id === id);
+        if (!updatedEntry) {
+            throw new Error('Entry not found');
+        }
 
-    if (index !== -1) {
-        console.log('Entry found at index:', index);
-        const updatedEntry = {
-            ...entries[index],
-            ...data,
-            watchedAt: data.watchedAt ? new Date(data.watchedAt).toISOString() : entries[index].watchedAt,
-        };
-        entries[index] = updatedEntry;
-        console.log('Updated Entry:', JSON.stringify(updatedEntry, null, 2));
-
-        await writeCSV(entries);
-        console.log('CSV written');
+        console.log('Updated Entry:', updatedEntry._id);
         revalidatePath('/');
-    } else {
-        console.log('Entry not found for update:', id);
-        console.log('Available IDs:', entries.map(e => e.id).join(', '));
+        return JSON.parse(JSON.stringify(updatedEntry));
+    } catch (error) {
+        console.error('Failed to update entry:', error);
+        throw new Error('Failed to update entry');
     }
-    console.log('--- updateWatchEntry END ---');
 }

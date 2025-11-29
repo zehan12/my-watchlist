@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { WatchEntry } from '@/db';
-import { deleteWatchEntry } from '@/app/actions';
+import { IWatchEntry } from '@/types/WatchEntry';
+import { useDeleteEntry } from '@/hooks/useWatchHistory';
 import WatchEntryForm from './WatchEntryForm';
 import { MoreVertical, Edit, Trash2 } from 'lucide-react';
 import {
@@ -26,14 +26,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
-export default function WatchEntryCard({ entry }: { entry: WatchEntry }) {
+export default function WatchEntryCard({ entry }: { entry: IWatchEntry }) {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
+    const deleteEntry = useDeleteEntry();
+
     const handleDelete = async () => {
-        console.log('Confirmed delete for ID:', entry.id);
-        await deleteWatchEntry(entry.id);
-        setIsDeleteOpen(false);
+        if (entry._id) {
+            console.log('Confirmed delete for ID:', entry._id);
+            await deleteEntry.mutateAsync(entry._id);
+            setIsDeleteOpen(false);
+        }
     };
 
     const getStatusColor = (status: string) => {

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { searchTMDB, addWatchEntry, updateWatchEntry } from '@/app/actions';
+import { searchTMDB } from '@/app/actions';
+import { useAddEntry, useUpdateEntry } from '@/hooks/useWatchHistory';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,10 +13,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { format } from 'date-fns';
 import { CalendarIcon, Search, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WatchEntry } from '@/db';
+import { IWatchEntry } from '@/types/WatchEntry';
 
 interface WatchEntryFormProps {
-    initialData?: WatchEntry;
+    initialData?: IWatchEntry;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -40,6 +41,8 @@ export default function WatchEntryForm({ initialData, isOpen, onClose }: WatchEn
     const [progress, setProgress] = useState<number>(0);
     const [totalEpisodes, setTotalEpisodes] = useState<number>(0);
     const [loading, setLoading] = useState(false);
+    const addEntry = useAddEntry();
+    const updateEntry = useUpdateEntry();
 
     useEffect(() => {
         if (initialData) {
@@ -108,12 +111,12 @@ export default function WatchEntryForm({ initialData, isOpen, onClose }: WatchEn
 
         console.log('Submitting Entry Data:', entryData);
 
-        if (initialData) {
-            console.log('Updating existing entry:', initialData.id);
-            await updateWatchEntry(initialData.id, entryData);
+        if (initialData && initialData._id) {
+            console.log('Updating existing entry:', initialData._id);
+            await updateEntry.mutateAsync({ id: initialData._id, data: entryData });
         } else {
             console.log('Adding new entry');
-            await addWatchEntry(entryData);
+            await addEntry.mutateAsync(entryData);
         }
         onClose();
     };

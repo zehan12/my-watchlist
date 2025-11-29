@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { WatchEntry } from '@/db';
+import { IWatchEntry } from '@/types/WatchEntry';
 import WatchEntryCard from '@/components/WatchEntryCard';
+import { useWatchHistory } from '@/hooks/useWatchHistory';
 import {
     Select,
     SelectContent,
@@ -11,23 +12,22 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-interface WatchHistoryListProps {
-    initialHistory: WatchEntry[];
-}
+export default function WatchHistoryList() {
+    const { data: history, isLoading } = useWatchHistory();
 
-export default function WatchHistoryList({ initialHistory }: WatchHistoryListProps) {
+    const safeHistory = history || [];
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [yearFilter, setYearFilter] = useState<string>('all');
 
     // Extract available years from history
     const availableYears = useMemo(() => {
-        const years = new Set(initialHistory.map(entry => new Date(entry.watchedAt).getFullYear()));
+        const years = new Set(safeHistory.map(entry => new Date(entry.watchedAt).getFullYear()));
         return Array.from(years).sort((a, b) => b - a);
-    }, [initialHistory]);
+    }, [safeHistory]);
 
     // Filter and Group History
     const { sortedYears, groupedHistory } = useMemo(() => {
-        let filtered = initialHistory;
+        let filtered = safeHistory;
 
         if (statusFilter !== 'all') {
             filtered = filtered.filter(entry => entry.status === statusFilter);
@@ -48,17 +48,30 @@ export default function WatchHistoryList({ initialHistory }: WatchHistoryListPro
 
             acc[year][month].push(entry);
             return acc;
-        }, {} as Record<number, Record<string, WatchEntry[]>>);
+        }, {} as Record<number, Record<string, IWatchEntry[]>>);
 
         const years = Object.keys(grouped)
             .map(Number)
             .sort((a, b) => b - a);
 
         return { sortedYears: years, groupedHistory: grouped };
-    }, [initialHistory, statusFilter, yearFilter]);
+    }, [safeHistory, statusFilter, yearFilter]);
+
+    if (isLoading) {
+        return <div className="text-center py-20 text-zinc-500">Loading...</div>;
+    }
 
     return (
         <div className="space-y-8">
+            <header className="mb-12 flex justify-between items-center">
+                <h1 className="text-4xl font-bold bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                    My Watchlist
+                </h1>
+                <div className="text-zinc-400">
+                    {safeHistory.length} {safeHistory.length === 1 ? 'Entry' : 'Entries'}
+                </div>
+            </header>
+
             {/* Filters */}
             <div className="flex gap-4 mb-8 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
                 <div className="w-48">
@@ -94,7 +107,7 @@ export default function WatchHistoryList({ initialHistory }: WatchHistoryListPro
             </div>
 
             {/* List */}
-            {initialHistory.length === 0 ? (
+            {safeHistory.length === 0 ? (
                 <div className="text-center py-20 text-zinc-500">
                     <p className="text-xl">No movies or series tracked yet.</p>
                     <p className="mt-2">Click the + button to add your first watch!</p>
@@ -118,7 +131,7 @@ export default function WatchHistoryList({ initialHistory }: WatchHistoryListPro
                                         </h3>
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                                             {entries.map((entry) => (
-                                                <WatchEntryCard key={entry.id} entry={entry} />
+                                                <WatchEntryCard key={entry._id} entry={entry} />
                                             ))}
                                         </div>
                                     </div>
