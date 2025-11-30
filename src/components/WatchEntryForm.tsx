@@ -7,11 +7,11 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarDatePicker } from '@/components/calendar-date-picker';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { format } from 'date-fns';
-import { CalendarIcon, Search, Star } from 'lucide-react';
+import { Search, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IWatchEntry } from '@/types/WatchEntry';
 
@@ -216,29 +216,13 @@ export default function WatchEntryForm({ initialData, isOpen, onClose }: WatchEn
 
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-zinc-400">Date Watched</label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                                "w-full justify-start text-left font-normal bg-zinc-900 border-zinc-800 hover:bg-zinc-800 hover:text-zinc-100",
-                                                !watchedAt && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {watchedAt ? format(watchedAt, "PPP") : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0 bg-zinc-950 border-zinc-800" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={watchedAt}
-                                            onSelect={setWatchedAt}
-                                            initialFocus
-                                            className="bg-zinc-950 text-zinc-100"
-                                        />
-                                    </PopoverContent>
-                                </Popover>
+                                <CalendarDatePicker
+                                    date={{ from: watchedAt, to: watchedAt }}
+                                    onDateSelect={({ from }) => setWatchedAt(from)}
+                                    variant="outline"
+                                    numberOfMonths={1}
+                                    className="w-full justify-start text-left font-normal bg-zinc-900 border-zinc-800 hover:bg-zinc-800 hover:text-zinc-100"
+                                />
                             </div>
                         </div>
 
@@ -290,25 +274,27 @@ export default function WatchEntryForm({ initialData, isOpen, onClose }: WatchEn
                                 </span>
                             </div>
                         </div>
+                        <div className='flex gap-4 w-full'>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-400">Review</label>
-                            <Textarea
-                                value={review}
-                                onChange={(e) => setReview(e.target.value)}
-                                className="bg-zinc-900 border-zinc-800 min-h-[100px]"
-                                placeholder="Write your thoughts..."
-                            />
-                        </div>
+                            <div className="flex-1 space-y-2">
+                                <label className="text-sm font-medium text-zinc-400">Review</label>
+                                <Textarea
+                                    value={review}
+                                    onChange={(e) => setReview(e.target.value)}
+                                    className="bg-zinc-900 border-zinc-800 min-h-[100px]"
+                                    placeholder="Write your thoughts..."
+                                />
+                            </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-400">Private Note</label>
-                            <Textarea
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                className="bg-zinc-900 border-zinc-800 min-h-[80px]"
-                                placeholder="Add a private note..."
-                            />
+                            <div className="flex-1 space-y-2">
+                                <label className="text-sm font-medium text-zinc-400">Private Note</label>
+                                <Textarea
+                                    value={note}
+                                    onChange={(e) => setNote(e.target.value)}
+                                    className="bg-zinc-900 border-zinc-800 min-h-[80px]"
+                                    placeholder="Add a private note..."
+                                />
+                            </div>
                         </div>
 
                         <DialogFooter>
