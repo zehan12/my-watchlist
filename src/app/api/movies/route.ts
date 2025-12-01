@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import WatchEntry from '@/models/WatchEntry';
-import { FilterQuery } from 'mongoose';
 
 export async function GET(request: Request) {
     await connectDB();
@@ -12,7 +11,7 @@ export async function GET(request: Request) {
     const mediaType = searchParams.get('mediaType');
     const search = searchParams.get('search');
 
-    const query: FilterQuery<typeof WatchEntry> = {};
+    const query: Record<string, any> = {};
 
     if (status) {
         query.status = status;
